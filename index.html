@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+	<title>玛雅数码应用</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta content="telephone=no" name="format-detection">
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <link rel="stylesheet" type="text/css" href="lib/appframework/css/af.ui.base.css" />
+    <link rel="stylesheet" type="text/css" href="lib/appframework/css/af.ui.css" />
+    <link rel="stylesheet" type="text/css" href="lib/appframework/css/icons.css" />
+    <link rel="stylesheet" type="text/css" href="css/datepicker.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <!--<script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.js"></script>-->
+    <script type="text/javascript" charset="utf-8" src="lib/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/appframework/jq.appframework.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/appframework/ui/appframework.ui.js"></script>
+	<script type="text/javascript" charset="utf-8" src="lib/appframework/plugins/af.slidemenu.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/jquery.location2.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/datepicker.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/date.format.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/ac.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+    <!--
+    <script type="text/javascript" charset="utf-8" src="lib/appframework/af.plugins.min.js"></script>-->
+    <script type="text/javascript">
+    	$.ui.backButtonText = "返回";
+    	var config = {
+    	    //serviceUrl: "http://maya.codestudio.com",
+    	    serviceUrl: "http://182.92.213.38",
+    	};
+    	// network disconnection.
+    	var onOffline = function () {
+            //$("#afui").popup("当前网络不可用");
+            ///alert("onOffline");
+        }
+        // network connnection.
+    	var onOnline = function () {
+            //$("#afui").popup("网络已连接");
+            ///alert("onOnline");
+    	}
+    	// device APIs are available
+	    var onDeviceReady = function () {
+	    	// Now safe to use device APIs
+	    	document.addEventListener('offline', onOffline, false);
+	    	document.addEventListener('online', onOnline, false);
+	    }
+
+    	jQuery(function ($) {
+    		// Wait for device API libraries to load
+    		document.addEventListener("deviceready", onDeviceReady, false);
+    		
+    		app.initialize();
+    	});
+    </script>
+</head>
+
+<body>
+    <div id="afui">
+        <div id="header">
+            <a id="menubadge" onclick="af.ui.toggleSideMenu()" class="menuButton"></a>
+        </div>
+
+        <header id="testheader">
+            <h1>玛雅旅行助手</h1>
+        </header>
+
+        <nav>
+        	<ul class="list">
+        		<li class="divider">工具列表</li>
+        		<li><a href="#pageCity" data-transition="slide">旅行地点</a></li>
+        		<li><a onclick="clearCache()">清除缓存</a></li>
+        	</ul>
+        </nav>
+
+        <nav id="toollist">
+            <ul class="list">
+             	<li class="divider">工具列表</li>
+	            <li><a href="#DLDY" data-transition="slide">电流电压</a></li>
+                <li><a href="#CZBZ" data-transition="slide">插座标准</a></li>
+                <li><a href="#QQTSYFF" data-transition="slide">全球通</a></li>
+                <li><a href="#SSHL" data-transition="slide">实时汇率</a></li>
+                <li><a href="#HBDH" data-transition="slide">货币换算</a></li>
+                <li><a href="#RCRLSJ" data-transition="slide">日出日落时间</a></li>
+                <li><a href="#CPZT" data-transition="slide">产品专题</a></li>
+                <li><a href="#DSGZL" data-transition="slide">大使馆资料</a></li>
+                <li><a href="#DDJJDH" data-transition="slide">当地紧急电话</a></li>
+                <li><a href="#JCXX" data-transition="slide">机场信息</a></li>
+                <li><a href="#CRJKTX" data-transition="slide">出入卡填写</a></li>
+            </ul>
+        </nav>
+
+        <section class="audio">
+            <a href="javascript:void(0);" class="u-globalAudio audio_btn"  data-status="on">
+                <i class="icon-music"></i></a>
+            <audio id="audio_host" data-src="">
+            </audio>
+        </section>
+
+        <div id="content">
+            <div id="main" data-title="&nbsp;" class="panel" selected="true">
+                <div class="logo" style="background: #00ABE3;">
+                    <i class="icon-logo"></i>
+                    <div class="logocity">当前城市：未设置</div>
+                </div>
+                <ul class="navbtn clearfix">
+                    <li><a href="#DLDY" data-transition="slide"><i class="icon-navbtn icon-navbtn01"></i><span>电流电压</span></a></li>
+                    <li><a href="#CZBZ" data-transition="slide"><i class="icon-navbtn icon-navbtn02"></i><span>插座标准</span></a></li>
+                    <li><a href="#QQTSYFF" data-transition="slide"><i class="icon-navbtn icon-navbtn03"></i><span>全球通</span></a></li>
+                    <li><a href="#SSHL" data-transition="slide"><i class="icon-navbtn icon-navbtn04"></i><span>实时汇率</span></a></li>
+                    <li><a href="#HBDH" data-transition="slide"><i class="icon-navbtn icon-navbtn05"></i><span>货币换算</span></a></li>
+                    <li><a href="#RCRLSJ" data-transition="slide"><i class="icon-navbtn icon-navbtn06"></i><span>日出日落时间</span></a></li>
+                    <li><a href="#CPZT" data-transition="slide"><i class="icon-navbtn icon-navbtn07"></i><span>产品专题</span></a></li>
+                    <li><a href="#DSGZL" data-transition="slide"><i class="icon-navbtn icon-navbtn08"></i><span>大使馆资料</span></a></li>
+                    <li><a href="#DDJJDH" data-transition="slide"><i class="icon-navbtn icon-navbtn09"></i><span>当地紧急电话</span></a></li>
+                    <li><a href="#JCXX" data-transition="slide"><i class="icon-navbtn icon-navbtn10"></i><span>机场信息</span></a></li>
+                    <li><a href="#CRJKTX" data-transition="slide"><i class="icon-navbtn icon-navbtn11"></i><span>出入卡填写</span></a></li>
+                </ul>
+            </div>
+            
+            <div id="DLDY" class="panel" data-title="电流电压" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="CZBZ" class="panel" data-title="插座标准" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="QQTSYFF" class="panel" data-title="全球通使用方法" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="SSHL" class="panel" data-title="实时汇率" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="HBDH" class="panel" data-title="货币换算" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="RCRLSJ" data-title="日出日落时间" class="panel" data-nav="toollist">
+            	<div class="headinfo"><p class="infotitle"><i class="icon-position"></i>您当前查询的城市</p><p class="infocont"><a href="javascript:$.ui.showModal('#pageCity','slide');">广州市</a> <span>北纬23.567,东经113.456</span></p></div>
+                <div class="sunrise">                    
+                    <div class="sunrise-body">
+                        <input type="text" id="date-input" readonly="readonly" />
+                    </div>
+                    <div class="sunrise-result"></div>
+                </div>
+            </div>
+            <div id="CPZT" class="panel" data-title="产品专题" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="DSGZL" class="panel" data-title="大使馆资料" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="DDJJDH" class="panel" data-title="当地紧急电话" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="JCXX" class="panel" data-title="机场信息" data-nav="toollist" data-load="app.showArticle2"></div>
+            <div id="CRJKTX" class="panel" data-title="出入卡填写" data-nav="toollist" data-load="app.showArticle2"></div>
+
+            <div id="pageCity" data-title="切换城市" data-modal="true" class="panel" data-nav="toollist">
+                <div id="citybox22">
+                    <div class="citybox-hd">旅游城市
+                        <br /><span>未设置</span>
+                    </div>
+                    <div class="citybox-bd">
+                        <div class="cityfilter-t">
+                            <input type="text" placeholder="查找城市">
+                        </div>
+                        <div class="cityfilter-c">
+                            <h4>巴 匹配到的城市</h4>
+                            <p>巴黎</p>
+                            <p>巴西</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
