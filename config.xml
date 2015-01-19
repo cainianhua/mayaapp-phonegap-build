@@ -32,7 +32,7 @@
     <preference name="ios-statusbarstyle"         value="black-opaque" />   <!-- ios: black-translucent will appear black because the PhoneGap webview doesn't go beneath the status bar -->
     <preference name="detect-data-types"          value="true" />           <!-- ios: controls whether data types (such as phone no. and dates) are automatically turned into links by the system -->
     <preference name="exit-on-suspend"            value="false" />          <!-- ios: if set to true, app will terminate when home button is pressed -->
-    <preference name="show-splash-screen-spinner" value="true" />           <!-- ios: if set to false, the spinner won't appear on the splash screen during app loading -->
+    <preference name="show-splash-screen-spinner" value="false" />          <!-- ios: if set to false, the spinner won't appear on the splash screen during app loading -->
     <preference name="auto-hide-splash-screen"    value="true" />           <!-- ios: if set to false, the splash screen must be hidden using a JavaScript API -->
     <preference name="disable-cursor"             value="false" />          <!-- blackberry: prevents a mouse-icon/cursor from being displayed on the app -->
     <preference name="android-minSdkVersion"      value="7" />              <!-- android: MIN SDK version supported on the target device. MAX version is blank by default. -->
@@ -40,7 +40,7 @@
 	<preference name="StatusBarOverlaysWebView"   value="false" />			<!-- ios: Fixed a status bar problem on iOS 7 and above -->
 	<preference name="SplashScreen"               value="screen"/>			<!-- android: 指定splashscreen文件名 -->
 	<preference name="SplashScreenDelay"          value="5000" />			<!-- android: Android不会自动隐藏splashscreen，这里指定其显示时间，单位：毫秒(ms), 默认值5000-->
-	<preference name="AutoHideSplashScreen"       value="false" />			<!-- iOS默认会自动隐藏splashscreen，这里设置iOS不自动隐藏, 貌似不起作用 -->
+	<preference name="AutoHideSplashScreen"       value="false" />			<!-- ios: iOS默认会自动隐藏splashscreen，这里设置iOS不自动隐藏, 貌似不起作用 -->
 	
 	<!--++++++++++++++++++++++ PLUGINs  ++++++++++++++++++++ -->
     <gap:plugin name="org.apache.cordova.battery-status" />
