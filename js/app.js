@@ -1,346 +1,340 @@
 ﻿/**
- * [formatDate description]
- * @param  {[type]} date [description]
- * @return {[type]}      [description]
- */
-function formatDate(date) {
-	date = date || new Date();
-    var y = date.getFullYear(),
-    	m = date.getMonth() + 1,
-    	d = date.getDate();
-
-    return y + "-" + ("0" + m).slice(-2) + "-" + ("0" + d).slice(-2);
-}
-/**
- * [isValidDate description]
- * @param  {[type]}  dateStr [description]
- * @return {Boolean}         [description]
- */
-function isValidDate(dateStr) {
-	return (new Date(dateStr).toString() != "Invalid Date");
-}
-/**
- * [checkDateRange description]
- * @param  {[type]} date [description]
- * @return {[type]}      [description]
- */
-function checkDateRange(date) {
-	var _minDate = new Date(2010, 1, 1);
-	var _maxDate = new Date(2030, 12, 31);
-
-	return date <= _maxDate && date >= _minDate;
-}
-/**
- * [calc_res description]
- * @return {[type]} [description]
- */
-function calc_res() {
-	var dateStr = $("#date-input").val();
-
-	// 验证日期格式
-	if (!dateStr || !isValidDate(dateStr)) { return; }
-	// 验证日期范围
-	var date = new Date(dateStr);
-	if (!checkDateRange(date)) { return; }
-    
-    var d = date.getDate(),
-        m = date.getMonth() + 1,
-        y = date.getFullYear(),
-        z = parseInt(localStorage.TimeZone),
-        lo = parseFloat(localStorage.Lng),
-        la = parseFloat(localStorage.Lat);
-
-    var obj = Cal(mjd(d,m,y,0.0), z, lo, la);
-    var ret = "";
-    if(obj["rise"] == undefined){
-        ret = "太阳不升";
-    }
-    else{
-        ret = "日出时间：<span><strong>" + obj["rise"] + "</strong> (当地时间)</span><br />";
-        if(obj["set"] == undefined){
-            ret += "太阳不落";
-        } else {
-            ret += "日落时间：<span class='nr'><strong>" + obj["set"] + "</strong> (当地时间)</span>";
-        }
-    }
-    
-    $(".sunrise-result").html(ret);
-};
-function clearCache() {
-	$("#afui").popup({
-        title: "警告",
-        message: "确定要清楚所有缓存吗？",
-        cancelText: "取消",
-        cancelCallback: function () {
-            console.log("cancelled");
-        },
-        doneText: "确定",
-        doneCallback: function () {
-            console.log("Done for!");
-            app.clearLocation();
-            window.location.reload();
-        },
-        cancelOnly: false
-    });
-}
-/**
- * [app description]
+ * app类，包含app操作常用的方法集合
  * @type {Object}
  */
 var app = {
-	/**
-	 * [initialize description]
-	 * @return {[type]} [description]
-	 */
-	initialize: function() {
-		var that = this;
-		// 显示地点信息
-	    that.showLocation();
-	    // 初始化地址选择控件
-	    $("#citybox22 .citybox-bd").locationsetter({
-	        serviceUrl: config.serviceUrl + '/services/locations',
-	        paramName: "dn",
-	        ajaxSettings: { dataType: "jsonp" },
-	        idField: "DistrictId",
-	        onSelect: function (suggestion) {
-	            //af.ui.toggleSideMenu();
-	            //$.ui.loadContent("#main",false,false,"slide");
-	            $.ui.hideModal();
-	            //alert('You selected: ' + suggestion.Name + ', ' + suggestion.DistrictId);
-	            that.saveLocation(suggestion);
+    /**
+     * 应用初始化入口方法
+     * @return {[type]} [description]
+     */
+    initialize: function() {
+        var that = this;
+        // 初始化旅游地点选择控件
+        that.initLocationSelector();
+        // 注册app监听事件
+        that.bindEvents();
+        // 初始化旅游地点信息
+        that.initLocation(true);
+        // 初始化panel的内容为正在加载...
+        $.each(config.toolHashs, function(index, idStr) {
+            // 日出日落时间不需要从服务器动态加载，所以不需要显示loading
+            if (idStr == "#RCRLSJ") return false;
+            that.initLoading($(idStr));
+        });
+        // 初始化日期选择控件
+        $('#date-input').val($.maya.utils.formatDate(new Date()))
+            .on("change", function(e) {
+                that.calc_res();
+            })
+            .datepicker({
+                monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+                shortDayNames: ["日", "一", "二", "三", "四", "五", "六"]
+            });
+        // 初始化日出日落时间
+        that.calc_res();
+        // 初始化音乐播放控件
+        $(".music-area").musicplayer({
+            did: localStorage.Id,
+            serviceUrl: config.serviceUrl + "/services/musics"
+        });
+        // 隐藏splashscreen
+        setTimeout(function() {
+            navigator.splashscreen && navigator.splashscreen.hide();
+        }, 2000);
+    },
+    /**
+     * 初始化旅游地点选择器
+     * @return {[type]} [description]
+     */
+    initLocationSelector: function() {
+        var that = this;
+        // 初始化旅游地点选择控件
+        $("#citybox22 .citybox-bd").locationsetter({
+            serviceUrl: config.serviceUrl + '/services/locations',
+            onSelect: function(district) {
+                that.saveLocation(district);
+                $.ui.hideModal();
+                // 关闭侧边栏
+                if ($.ui.isSideMenuOn()) $.ui.toggleSideMenu(false);
+                // 重新加载当前页面内容
+                var href = location.hash;
+                if (href && config.toolHashs.indexOf(href) > -1) {
+                    // 说明：可以触发a的click事件，
+                    // 但是$.ui.loadDiv方法不会触发panel的load事件
+                    //$("#main .navbtn a[href=" + href + "]").trigger("click");
 
-	            that.showLocation();
-
-	            window.location.reload();
-	        }
-	    });
-	    // 初始化日期日期选择控件
-	    $('#date-input').val(formatDate(new Date())).on("change", function(e){
-	    	calc_res();
-	    }).datepicker({ 
-	    	monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月" ], 
-	    	shortDayNames: ["日", "一", "二", "三", "四", "五", "六"]
-	    });
-	    // 计算日出日落时间
-	    calc_res();
-	    // 播放音乐
-	    that.playAudio();
-	},
-	playAudio: function() {
-		//music
-		//
-		var that = this;
-
-		if (!that.checkLocation()) return;
-		//
-
-		var initAudio = function(musics) {
-			if (musics.length <= 0) return;
-			var i = 0;
-			var endIndex = musics.length;
-			var audioHost = $("#audio_host");
-			var au = $('.audio_btn');
-
-			console.log("music index is:" + i);
-
-	        audioHost.attr('src', musics[0].LinkTo);
-	        //audioHost.attr('loop', true);
-	        audioHost.attr('autoplay', false);
-	        audioHost.on("ended", function() {
-	        	i++;
-	        	console.log("music index is:" + i);
-	        	if (i > endIndex - 1) {
-	        		// 从头开始
-	        		i  = 0;
-	        		audioHost.attr('src', musics[i].LinkTo);
-	        		au.toggleClass('z-play');
-	        		audioHost.get(0).pause();
-	        		return false;
-	        	}
-	        	audioHost.attr('src', musics[i].LinkTo);
-	        	au.addClass('z-play');
-	        	audioHost.get(0).play();
-	        });
-	        // 播放状态
-	        au.addClass('z-play');
-	        audioHost.get(0).play();
-
-	        au.on('click', function() {
-	            if ($(this).data('status') === 'off') {
-	                $(this).data('status', 'on');
-	                audioHost.get(0).play();
-	            } else {
-	                $(this).data('status', 'off');
-	                audioHost.get(0).pause();
-	            }
-	            au.toggleClass('z-play');
-	        });
-		};
-
-		// ajax music data.
-		var ajaxSettings = {
-			url: config.serviceUrl + "/services/musics",
-			dataType: "json",
-			data: { did: localStorage.Id }
-		}
-
-		$.ajax(ajaxSettings).fail(function(jqXHR, textStatus, errorThrown) {			
-			$("#afui").popup({ title: "提示", message: "网络不可用" });
-		}).always(function() {
-			//$.ui.hideMask();
-		}).done(function(musics) {
-			console.log("music's count: " + musics.length);
-			initAudio(musics);
-		});
-	},
-	/**
-	 * [checkLocation description]
-	 * @return {[type]} [description]
-	 */
-	checkLocation: function() {
-		if (!localStorage.Id) {
+                    if (href == "#RCRLSJ") {
+                        that.calc_res();
+                    }
+                    else {
+                        app.showArticle2($(location.hash).get(0));
+                    }
+                };
+            }
+        });
+    },
+    /**
+     * 重置旅游地点选择器
+     * @return {[type]} [description]
+     */
+    resetLocationSelector: function() {
+        var that = this;
+        $("#citybox22 .citybox-bd").locationsetter("reset");
+    },
+    /**
+     * 检测用户是否已经选择了地理位置
+     * @return {[type]} [description]
+     */
+    checkLocation: function() {
+        if (!localStorage.Id) {
             return false;
         }
         return true;
-	},
-	/**
-	 * [showLocation description]
-	 * @return {[type]} [description]
-	 */
-	showLocation: function() {
-		var that = this;
+    },
+    /**
+     * 在页面上显示地理位置信息
+     * @param  {[type]} force 如果未选择地点，是否弹出地点选择器
+     * @return {[type]}       [description]
+     */
+    initLocation: function(force) {
+        var that = this;
 
-		if (!that.checkLocation()) { 
-			that.changeLocation();
-			return; 
-		};
-
-		var locName = localStorage.Name;
+        var locName = localStorage.Name || "未设置";
         var locLng = localStorage.Lng;
         var locLat = localStorage.Lat;
 
+        // 文章页顶部显示地点信息
         $(".headinfo p.infocont a").text(locName);
-        $("#citybox22 .citybox-hd span").text(locName);
-        $("#main .logocity").text("当前城市：" + locName);
         $(".headinfo p.infocont span").text(that.translateLat(locLat) + "," + that.translateLng(locLng));
-	},
-	/**
-	 * [changeLocation description]
-	 * @return {[type]} [description]
-	 */
-	changeLocation: function() {
-		//af.ui.toggleSideMenu();
-	    //$.ui.loadContent("#main",false,false,"slide");
-	    $.ui.showModal('#pageCity','slide');
-	},
-	/**
-	 * [clearLocation description]
-	 * @return {[type]} [description]
-	 */
-	clearLocation: function() {
-		localStorage.removeItem("Id");
-		localStorage.removeItem("Name");
-		localStorage.removeItem("Lng");
-		localStorage.removeItem("Lat");
-		localStorage.removeItem("TimeZone");
-	},
-	/**
-	 * [saveLocation description]
-	 * @param  {[type]} district [description]
-	 * @return {[type]}          [description]
-	 */
-	saveLocation: function(district) {
-		localStorage.Id = district.DistrictId;
+        // 设置旅游城市页面显示地点信息
+        $("#citybox22 .citybox-hd span").text(locName);
+        // 首页顶部显示地点信息
+        $("#main .logocity").text("旅行目的地：" + locName);
+
+        if (!that.checkLocation() && force) {
+            that.changeLocation();
+        };
+    },
+    /**
+     * 修改地理位置信息
+     * @return {[type]} [description]
+     */
+    changeLocation: function() {
+        $.ui.showModal('#pageCity', 'slide');
+    },
+    /**
+     * 清除localStorage的地理位置信息
+     * @return {[type]} [description]
+     */
+    clearLocation: function() {
+        localStorage.removeItem("Id");
+        localStorage.removeItem("Name");
+        localStorage.removeItem("Lng");
+        localStorage.removeItem("Lat");
+        localStorage.removeItem("TimeZone");
+
+        this.initLocation();
+    },
+    /**
+     * 保存地理位置到localStorage
+     * @param  {[type]} district [description]
+     * @return {[type]}          [description]
+     */
+    saveLocation: function(district) {
+        localStorage.Id = district.DistrictId;
         localStorage.Name = district.Name;
         localStorage.Lng = district.Lng;
         localStorage.Lat = district.Lat;
         localStorage.TimeZone = district.TimeZone || 8;
 
-        this.showLocation();
-	},
-	/**
-	 * [showArticle2 description]
-	 * @param  {[type]} panel [description]
-	 * @return {[type]}       [description]
-	 */
-	showArticle2: function (panel) {
-	    //$.ui.showMask("测试...");
+        this.initLocation();
+    },
+    /**
+     * 显示文章内容
+     * @param  {[type]} panel 当前的panel的dom对象
+     * @return {[type]}       [description]
+     */
+    showArticle2: function(panel) {
+        console.log("Call showArticle2");
 
-		//debugger;
-		var el = $(panel);
-		var that = this;
+        var el = $(panel);
+        var that = this;
 
-		if (!that.checkLocation()) {
-			that.changeLocation();
-			return;
-		}
-
-		var showLoading = function() {
-			var htmlContent = '<div class="loading-bd">'
-							+ '    <span class="loading-icon spin"></span>'
-							+ '</div>';
-			$.ui.updatePanel(el.prop("id"), htmlContent);
-		}
-
-		showLoading();
-		
-		var transitionInterval = setInterval(function() {
-			if ($.ui.doingTransition == false) clearInterval(transitionInterval);
-		}, 1000);
-		
-		var ajaxSettings = {
-			url: config.serviceUrl + "/services/articles",
-			dataType: "html",
-			data: {
-				type: el.prop("id").toUpperCase(),
-				did: localStorage.Id
-			}
-		}
-
-		$.ajax(ajaxSettings).fail(function(jqXHR, textStatus, errorThrown) {			
-			$("#afui").popup("网络不可用，请稍候再试。");
-		}).always(function() {
-			//$.ui.hideMask();
-		}).done(function(htmlContent) {
-			var idStr = el.prop("id"),
-				htmlLocation = '<div class="headinfo"><p class="infotitle"><i class="icon-position"></i>您当前查询的城市</p><p class="infocont"><a href="javascript:$.ui.showModal(\'#pageCity\',\'slide\');">未知城市</a> <span>未设置经纬度</span></p></div>';
-
-			if (idStr != "SSHL" && idStr != "HBDH") {
-				htmlContent = htmlLocation + htmlContent;
-			};
-
-			$.ui.updatePanel(idStr, htmlContent);
-			that.showLocation();
-			
-			console.log("article load.");
-		});
-	},
-	/**
-	 * [translateLng description]
-	 * @param  {[type]} lng [description]
-	 * @return {[type]}     [description]
-	 */
-	translateLng: function(lng) {
-		if (!lng) { return "未知经度" };
-        if (lng.substr(0,1) == "-") { 
-            return "西经" + lng.substr(1);
+        if (!that.checkLocation()) {
+            that.changeLocation();
+            return;
         }
-        else {
-            return "东经" + lng;
+
+        console.log("doingTransition: " + $.ui.doingTransition);
+
+        // afui动画完成之后执行回调方法
+        // 这样可以避免页面多个效果重叠导致卡顿的问题
+        $.maya.utils.afterAfuiTransitionCompleted(function() {
+            var ajaxSettings = {
+                url: config.serviceUrl + "/services/articles",
+                dataType: "html",
+                data: {
+                    type: el.prop("id").toUpperCase(),
+                    did: localStorage.Id
+                }
+            }
+
+            if (that.currAjaxRequest) {
+                that.currAjaxRequest.abort();
+            }
+
+            that.currAjaxRequest = $.ajax(ajaxSettings).done(function(htmlContent) {
+                var idStr = el.prop("id"),
+                    htmlLocation = '<div class="headinfo"><p class="infotitle"><i class="icon-position"></i>您当前查询的城市</p><p class="infocont"><a href="javascript:$.ui.showModal(\'#pageCity\',\'slide\');">未知城市</a> <span>未设置经纬度</span></p></div>';
+
+                // 实时汇率
+                // 货币换算
+                if (idStr != "SSHL" && idStr != "HBDH") {
+                    htmlContent = htmlLocation + htmlContent;
+                };
+
+                $.ui.updatePanel(idStr, htmlContent);
+                that.initLocation();
+
+                console.log("Loaded article.");
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                $.maya.utils.showNotice("网络不给力");
+            }).always(function() {
+                that.currAjaxRequest = null;
+            });
+        });
+    },
+    /**
+     * 清空文章数据
+     * @param  {[type]} panel 当前的panel的dom对象
+     * @return {[type]}       [description]
+     */
+    clearArticle: function(panel) {
+        console.log("Call clearArticle");
+
+        this.initLoading(panel);
+    },
+    /**
+     * 显示正在加载信息
+     * @param  {[type]} panel [description]
+     * @return {[type]}       [description]
+     */
+    initLoading: function(panel) {
+        var htmlContent = '<div class="loading-bd">' + '    <span class="loading-icon spin"></span>' + '</div>';
+        $.ui.updatePanel($(panel).prop("id"), htmlContent);
+    },
+    /**
+     * 转换经度表示方式
+     * @param  {[type]} lng [description]
+     * @return {[type]}     [description]
+     */
+    translateLng: function(lngStr) {
+        if (!lngStr) {
+            return "未知经度"
+        };
+
+        var lng = parseFloat(lngStr),
+            angleString = $.maya.utils.toAngleString(lng);
+
+        return (lng < 0 ? "西经" : "东经") + angleString;
+    },
+    /**
+     * 转化纬度表示方式
+     * @param  {[type]} latStr [description]
+     * @return {[type]}        [description]
+     */
+    translateLat: function(latStr) {
+        if (!latStr) {
+            return "未知纬度"
+        };
+
+        var lat = parseFloat(latStr),
+            angleString = $.maya.utils.toAngleString(lat);
+
+        return (lat < 0 ? "南纬" : "北纬") + angleString;
+    },
+    /**
+     * 清除浏览器localStorage缓存
+     */
+    clearCache: function() {
+        $.ui.popup({
+            title: "提醒",
+            message: "确定要清楚所有缓存吗？",
+            cancelText: "取消",
+            cancelCallback: function() {
+                console.log("cancelled");
+            },
+            doneText: "确定",
+            doneCallback: function() {
+                console.log("Done for!");
+                $.ui.toggleSideMenu();
+                app.clearLocation();
+                app.changeLocation();
+            },
+            cancelOnly: false
+        });
+    },
+    /**
+     * 设置日出日落时间
+     * @return {[type]} [description]
+     */
+    calc_res: function() {
+        var dateStr = $("#date-input").val();
+
+        // 验证日期格式
+        if (!dateStr || !$.maya.utils.isValidDate(dateStr)) {
+            return;
         }
-	},
-	/**
-	 * [translateLat description]
-	 * @param  {[type]} lat [description]
-	 * @return {[type]}     [description]
-	 */
-	translateLat: function(lat) {
-		if (!lat) { return "未知纬度" };
-        if (lat.substr(0,1) == "-") { 
-            return "南纬" + lat.substr(1);
+        // 验证日期范围
+        var date = new Date(dateStr);
+        if (!$.maya.utils.checkDateRange(date)) {
+            return;
         }
-        else {
-            return "北纬" + lat;
+
+        var d = date.getDate(),
+            m = date.getMonth() + 1,
+            y = date.getFullYear(),
+            z = parseInt(localStorage.TimeZone),
+            lo = parseFloat(localStorage.Lng),
+            la = parseFloat(localStorage.Lat);
+
+        var ac = new AstroCalculator();
+
+        var obj = ac.calculate(ac.mjd(d, m, y, 0.0), z, lo, la);
+        var ret = "";
+        if (obj["rise"] == undefined) {
+            ret = "太阳不升";
+        } else {
+            ret = "日出时间：<span><strong>" + obj["rise"] + "</strong> (当地时间)</span><br />";
+            if (obj["set"] == undefined) {
+                ret += "太阳不落";
+            } else {
+                ret += "日落时间：<span class='nr'><strong>" + obj["set"] + "</strong> (当地时间)</span>";
+            }
         }
-	}
+
+        $(".sunrise-result").html(ret);
+    },
+    /**
+     * 注册app需要监听的事件
+     * @return {[type]} [description]
+     */
+    bindEvents: function() {
+        document.addEventListener("deviceready", this.onDeviceReady, false);
+    },
+    // deviceready Event Handler
+    //
+    // The scope of 'this' is the event. In order to call the 'receivedEvent'
+    // function, we must explicitly call 'app.receivedEvent(...);'
+    onDeviceReady: function() {
+        // Now safe to use device APIs
+        // network disconnection.
+        document.addEventListener('offline', function() {
+            $.maya.utils.showNotice("网络不给力");
+        }, false);
+        // network connnection.
+        document.addEventListener('online', function() {
+            $.maya.utils.showNotice("网络已连接");
+        }, false);
+    }
 }
