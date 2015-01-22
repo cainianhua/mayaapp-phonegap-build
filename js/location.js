@@ -1,4 +1,6 @@
-
+/**
+ * 旅游地点选择插件
+ */
 ;(function ($) {
     var utils = (function () {
             return {
@@ -23,7 +25,7 @@
         var that = this;
             defaults = {
                 serviceUrl: "",         // 数据接口
-                paramName: "s",         // 数据请求的参数名称，在发起请求的时候会把用户输入的搜索关键词作为值传给api
+                paramName: "dn",         // 数据请求的参数名称，在发起请求的时候会把用户输入的搜索关键词作为值传给api
                 reqType: "GET",
                 dataType: "json",       // ajax请求返回的数据格式
                 params: {},             // 请求数据接口需要附带的额外参数
@@ -32,7 +34,7 @@
                     return typeof response === 'string' ? $.parseJSON(response) : response;
                 },
                 formatResult: LocationSetter.formatResult,
-                idField: "id",          // 根据接口返回的结果配置
+                idField: "DistrictId",          // 根据接口返回的结果配置
                 textField: "Name",
                 onSelect: null,
                 minChars: 2,            // 输入多少个字符才能触发ajax搜索数据
@@ -48,11 +50,12 @@
         that.options = $.extend({}, defaults, options);
         that.searchTextBox = null;          // search box object, it's a textbox.
         that.searchResultContainer = null;  // the container that search results will be put on it.
-        that.currSearchText = "";           // current search text value.
+        that.currSearchText = null;           // current search text value.
         that.currAjaxRequest = null;        // current ajax request to search data from server by keywords.
 
         // Initialize:
         that.initialize();
+        that.reset();
     }
 
     LocationSetter.utils = utils;
@@ -67,7 +70,7 @@
 
     LocationSetter.prototype = {
         /**
-         * [initialize description]
+         * 创建LocationSetter控件，一般只执行一次
          * @return {[type]} [description]
          */
         initialize: function() {
@@ -76,13 +79,26 @@
                 container = that.el;
             
             // 创建搜索框以及搜索结果容器
-            container.html('<div class="search-box cityfilter-t"><input type="text" class="input-search" placeholder="查找城市" /></div>'
+            container.html('<div class="search-box cityfilter-t"><input type="text" class="input-search" placeholder="请输入搜索关键字" /></div>'
                           +'<div class="search-results cityfilter-c"></div>');
 
             that.searchTextBox = $(".input-search", container);
             that.searchResultContainer = $(".search-results", container);
 
             that.searchTextBox.on("keyup.locationsetter", function(e) { that.onKeyUp(e); });
+
+            //that.searchTextBox.trigger("keyup");
+        },
+        /**
+         * 初始化控件
+         * @return {[type]} [description]
+         */
+        reset: function() {
+            var that = this;
+
+            that.searchTextBox.val("");
+
+            that.searchTextBox.trigger("keyup");
         },
         /**
          * [onKeyUp description]
@@ -101,8 +117,10 @@
             clearInterval(that.onChangeInterval);
 
             var searchWord = $.trim(that.searchTextBox.val());
-            if (searchWord == "") return;
+            //if (searchWord == "") return;
             if (that.currSearchText !== searchWord) {
+            	that.searchResultContainer.html('<p class="tips">正在加载...</p>');
+
                 if (that.options.deferRequestBy > 0) {
                     // Defer lookup in case when value changes very quickly:
                     that.onChangeInterval = setInterval(function () {
@@ -150,7 +168,10 @@
                 that.suggestions = response.suggestions;
                 that.suggest();
             } 
-            else if (!that.isBadQuery(searchWord)) {
+            else if (that.isBadQuery(searchWord)) {
+            	that.searchResultContainer.html('<p class="tips">没有匹配的地点</p>');
+            }
+        	else {
                 ajaxSettings = {
                     url: serviceUrl,
                     data: options.params,
@@ -165,11 +186,11 @@
                 }
 
                 that.currentAjaxRequest = $.ajax(ajaxSettings).done(function(ajaxResponse) {
-                    that.currentAjaxRequest = null;
-
                     that.processResponse(ajaxResponse, searchWord, cacheKey);
                 }).fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown);
+                }).always(function() {
+                    that.currentAjaxRequest = null;
                 });
             }
         },
@@ -202,6 +223,7 @@
                 itemsHtml += '<p class="search-item" data-id="' + suggestion[options.idField] + '" data-index="' + i + '">' + formatResult(suggestion[options.textField],  that.currSearchText)+ '</p>'
             });
 
+            itemsHtml = itemsHtml || '<p class="tips">没有匹配的地点</p>'
             that.searchResultContainer.html(itemsHtml);
 
             $("p.search-item", that.searchResultContainer).click(function(e) {
@@ -247,10 +269,10 @@
             $.extend(options, suppliedOptions);
         },
         dispose: function () {
-            var that = this;
-            that.el.off('.autocomplete')
-                   .removeData('autocomplete')
-                   .html("");
+            // Refer from: http://api.jquery.com/empty/
+            // To avoid memory leaks, 
+            // jQuery removes other constructs such as data and event handlers from the child elements before removing the elements themselves.
+            this.el.empty().removeData("locationsetter");
         }
     };
 
