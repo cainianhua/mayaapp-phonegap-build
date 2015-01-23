@@ -18,7 +18,7 @@ var app = {
         // 初始化panel的内容为正在加载...
         $.each(config.toolHashs, function(index, idStr) {
             // 日出日落时间不需要从服务器动态加载，所以不需要显示loading
-            if (idStr == "#RCRLSJ") return false;
+            if (idStr == "#RCRLSJ") return;
             that.initLoading($(idStr));
         });
         // 初始化日期选择控件
@@ -63,13 +63,12 @@ var app = {
                     // 但是$.ui.loadDiv方法不会触发panel的load事件
                     //$("#main .navbtn a[href=" + href + "]").trigger("click");
 
-                    if (href == "#RCRLSJ") {
-                        that.calc_res();
-                    }
-                    else {
+                    if (href != "#RCRLSJ") {
                         app.showArticle2($(location.hash).get(0));
                     }
                 };
+                // 日出日落时间每次都必须重新计算
+                that.calc_res();
             }
         });
     },

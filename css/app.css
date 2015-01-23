@@ -237,9 +237,10 @@ opacity: 1;}*/
 }
 .logo {
     text-align: center;
-    padding: 0 0 60px 0;
-    background: #00ABE3;
+    padding: 30px 0;
     position: relative;
+    height: 133px;
+    background: #00ABE3 url(images/headerbg.png) no-repeat center top;
 }
 .logo .icon-logo {
     background: url(images/logo.png) no-repeat center top;
