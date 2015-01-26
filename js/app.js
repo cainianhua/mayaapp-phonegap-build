@@ -62,7 +62,6 @@ var app = {
                     // 说明：可以触发a的click事件，
                     // 但是$.ui.loadDiv方法不会触发panel的load事件
                     //$("#main .navbtn a[href=" + href + "]").trigger("click");
-
                     if (href != "#RCRLSJ") {
                         app.showArticle2($(location.hash).get(0));
                     }
@@ -140,11 +139,20 @@ var app = {
      * @return {[type]}          [description]
      */
     saveLocation: function(district) {
-        localStorage.Id = district.DistrictId;
-        localStorage.Name = district.Name;
-        localStorage.Lng = district.Lng;
-        localStorage.Lat = district.Lat;
-        localStorage.TimeZone = district.TimeZone || 8;
+        try {
+            localStorage.setItem("Id", district.DistrictId);
+            localStorage.setItem("Name", district.Name);
+            localStorage.setItem("Lng", district.Lng);
+            localStorage.setItem("Lat", district.Lat);
+            localStorage.setItem("TimeZone", district.TimeZone || 8);
+        }
+        catch (errorThrown) {
+            $.ui.popup({
+                title: "警告",
+                message: "您的浏览器设置为无痕浏览，请退出无痕浏览模式再运行此应用。"
+            });
+            return;
+        }
 
         this.initLocation();
     },
