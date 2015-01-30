@@ -10,69 +10,16 @@
     <meta content="telephone=no" name="format-detection">
     <meta name="keywords" content="">
     <meta name="description" content="">
+    <link rel="stylesheet" type="text/css" href="lib/appframework/css/icons.css" />
     <link rel="stylesheet" type="text/css" href="lib/appframework/css/af.ui.base.css" />
     <link rel="stylesheet" type="text/css" href="lib/appframework/css/af.ui.css" />
-    <link rel="stylesheet" type="text/css" href="lib/appframework/css/icons.css" />
     <link rel="stylesheet" type="text/css" href="css/app.css" />
-    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
-    <!--<script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.js"></script>-->
-    <script type="text/javascript" charset="utf-8" src="lib/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="lib/appframework/jq.appframework.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="lib/appframework/ui/appframework.ui.js"></script>
-	<!--<script type="text/javascript" charset="utf-8" src="lib/appframework/plugins/af.slidemenu.js"></script>-->
-	<script type="text/javascript" charset="utf-8" src="js/utils.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/notice.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/location.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/datepicker.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/musicplayer.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/ac.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
-    <!--
-    <script type="text/javascript" charset="utf-8" src="lib/appframework/af.plugins.min.js"></script>-->
-    <script type="text/javascript">
-    	var config = {
-            serviceUrl: "http://app.mayacn.net",
-            // "日出日落查询"内容不需要
-            toolHashs: ["#DLDY", "#CZBZ", "#QQTSYFF", "#SSHL", "#HBDH", "#RCRLSJ", "#CPZT", "#DSGZL", "#DDJJDH", "#JCXX", "#CRJKTX"],
-        };
-        $.ui.backButtonText = "返回";
-        $.ui.ready(function() {
-            /**
-             * 自定义a标签处理方法
-             * @param  {[type]} target [description]
-             * @param  {[type]} e      [description]
-             * @return {[type]}        [description]
-             */
-            /*
-            $.ui.customClickHandler = function(target, e) {
-                var href = target.hash.length > 0 ? target.hash : target.href;
-                if (href && config.toolHashs.indexOf(href) > -1) {
-                    if (!app.checkLocation()) {
-                        app.changeLocation();
-                    }
-                    else {
-                        $.ui.loadDiv(href, false, false, "slide");
-                    }
-                    return true; // 返回true告诉afui，我们自己已经处理了这个a的点击事件
-                };
-            };*/
-        });
-
-        jQuery(function ($) {
-    		app.initialize();
-    	});
-    </script>
 </head>
-
 <body>
     <div id="afui">
         <div id="header">
             <a id="menubadge" onclick="af.ui.toggleSideMenu()" class="menuButton"></a>
         </div>
-
-        <header id="testheader">
-            <h1>玛雅旅行助手</h1>
-        </header>
 
         <nav>
         	<ul class="list">
@@ -99,11 +46,11 @@
             </ul>
         </nav>
 
-        <section class="music-area">
-            <!-- music player plugin here -->
-        </section>
-
         <div id="content">
+            <section class="music-area">
+                <!-- music player plugin here -->
+            </section>
+        
             <div id="main" data-title="玛雅助手" class="panel" selected="true">
                 <div class="logo">
                     <div class="logocity">旅行目的地：未设置</div>
@@ -155,5 +102,29 @@
             </div>
         </div>
     </div>
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/appframework/jq.appframework.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/appframework/ui/appframework.ui.js"></script>
+    <!--<script type="text/javascript" charset="utf-8" src="lib/appframework/plugins/af.slidemenu.js"></script>-->
+    <script type="text/javascript" charset="utf-8" src="js/utils.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/config.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/notice.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/location.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/datepicker.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/musicplayer.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/ac.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+    <script type="text/javascript">
+        $.ui.backButtonText = "返回";
+        $.ui.useOSThemes = false;
+
+        $(function() {
+            // 考虑到部分功能依赖于afui，所以把初始化放在afui ready之后去做
+            $.ui.ready(function() {
+                app.initialize();
+            });
+        });
+    </script>
 </body>
 </html>

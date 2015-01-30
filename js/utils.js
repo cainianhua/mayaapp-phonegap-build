@@ -40,12 +40,17 @@ function Utils() {
 	 * @return {[type]}         [description]
 	 */
 	this.showNotice = function(content) {
-		var _notice = $("#afui").notice({ 
-	        message: content, 
-	        onShow: function() {
-	            setTimeout(function() { _notice.hide(); }, 3000);
-	        }
-	    });
+		if (window.plugins && window.plugins.toast) {
+			window.plugins.toast.showLongBottom(content);
+		}
+		else {
+			var _notice = $("#afui").notice({ 
+		        message: content, 
+		        onShow: function() {
+		            setTimeout(function() { _notice.hide(); }, 3000);
+		        }
+		    });
+		}
 	};
 	/**
 	 * AfUI的动画效果完成之后，执行指定的方法
@@ -59,7 +64,6 @@ function Utils() {
 		else {
 			// 监听doingTransition的状态
 			var transitionInterval = setInterval(function() {
-				console.log("doingTransition: " + $.ui.doingTransition);
 				if ($.ui.doingTransition == false) {
 					clearInterval(transitionInterval);
 					callback();

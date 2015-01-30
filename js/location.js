@@ -189,6 +189,7 @@
                     that.processResponse(ajaxResponse, searchWord, cacheKey);
                 }).fail(function (jqXHR, textStatus, errorThrown) {
                     console.log(errorThrown);
+                    that.searchResultContainer.html('<p class="tips">请求数据异常</p>');
                 }).always(function() {
                     that.currentAjaxRequest = null;
                 });
@@ -231,7 +232,7 @@
                 // jq.appframework.js has a bug
                 // we can't get correct this object.
                 //var self = $(this);
-                var self = $(e.target);
+                var self = $(e.currentTarget);
                 that.onSelect(self.data("index"));
             });
         },

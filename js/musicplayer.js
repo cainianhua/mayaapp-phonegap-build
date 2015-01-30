@@ -110,7 +110,31 @@
                 });
 
                 that.switchTo(0);
+                that.pause();
             });
+
+            /*
+            // 以下功能有问题，暂时换一种方式实现。
+            // 页面不可见之后停止播放
+            var visibilityChange;
+            if (typeof document.hidden !== "undefined") {
+                visibilityChange = "visibilitychange";
+            } else if (typeof document.mozHidden !== "undefined") {
+                visibilityChange = "mozvisibilitychange";
+            } else if (typeof document.msHidden !== "undefined") {
+                visibilityChange = "msvisibilitychange";
+            } else if (typeof document.webkitHidden !== "undefined") {
+                visibilityChange = "webkitvisibilitychange";
+            }
+
+            $.maya.utils.showNotice("visibilityChange: " + visibilityChange);
+            // 手机实验不能触发此事件
+            document.addEventListener(visibilityChange, function() {
+                console.log("visibilityChange");
+                $.maya.utils.showNotice("visibility changed");
+                that.pause();
+            }, false);
+            */
         },
         /**
          * 异步获取指定地点的音乐设置信息
@@ -135,13 +159,12 @@
             };
 
             that.currAjaxRequest = $.ajax(ajaxSettings).done(function(musics) {
-                console.log("music's count: " + musics.length);
                 that.musics = musics;
                 callback(null, musics);
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 callback({
                     code: -1,
-                    message: "网络连接不可用"
+                    message: "请求旅行音乐数据异常"
                 });
             }).always(function() {
                 that.currAjaxRequest = null;
@@ -153,7 +176,7 @@
          * @return {[type]}           [description]
          */
         switchTo: function(currIndex) {
-            console.log("music play index: " + currIndex);
+            //console.log("music play index: " + currIndex);
 
             var that = this,
                 musics = that.musics;
