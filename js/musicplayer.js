@@ -66,6 +66,7 @@
         that.currMusicIndex = 0;
 
         that.initialize();
+        that.refresh();
     }
 
     MusicPlayer.prototype = {
@@ -81,7 +82,7 @@
             container.html('<a href="javascript:void(0);" class="u-globalAudio audio_btn"  data-status="on">' 
                          + '    <i class="icon-music"></i>' 
                          + '</a>' 
-                         + '<audio id="audio_host" data-src=""></audio>');
+                         + '<audio id="audio_host"></audio>');
 
             that.audioElement = $("#audio_host", container);
             that.controlButton = $('.audio_btn', container);
@@ -89,15 +90,59 @@
                 if (that.isPlaying) {
                     that.pause();
                 } else {
-                    that.play();
+                    if (!that.canPlay()) {
+                        $.maya.utils.showNotice("没有可以播放的音乐");
+                    } else {
+                        that.play();
+                    }
                 }
             });
+            // 初始化audio控件
+            // 
             //// 取消循环播放
             //that.audioElement.attr('loop', true);
             // 取消自动播放
             that.audioElement.attr('autoplay', false);
+            that.audioElement.attr('src', '');
+
+            // 当前播放列表已经播放完毕（控件每次播放列表只有一首音乐）
+            that.audioElement.on("ended", function() {
+                console.log("ended invoke.");
+                if (that.switchTo(++that.currMusicIndex)) {
+                    that.play();
+                }
+            });
+            // 音频开始播放
+            that.audioElement.on("play", function() {
+                console.log("play invoke.");
+                that.play();
+            });
+            // 音频暂停播放
+            that.audioElement.on("pause", function() {
+                console.log("pause invoke.");
+                that.pause();
+            });
+            // 当音频在因缓冲而暂停或停止后已就绪时触发。
+            that.audioElement.on("playing", function() {
+                console.log("playing invoke.");
+                //TODO: 考虑显示正在缓冲状态
+                that.play();
+            });
+        },
+        /**
+         * 刷新音乐数据列表
+         * @return {[type]} [description]
+         */
+        refresh: function(opts) {
+            // 更新options
+            this.options = $.extend({}, this.options, opts);
+
+            var that = this,
+                districtId = that.options.did;
 
             if (!districtId) return;
+
+            that.reset();
 
             that.getMusics(districtId, function(error, musics) {
                 if (error) {
@@ -105,36 +150,17 @@
                     return;
                 };
 
-                that.audioElement.on("ended", function() {
-                    that.switchTo(++that.currMusicIndex);
-                });
+                console.log("music's count: " + musics.length);
+
+                /*// 音乐控件不显示，然后再显示，位置会有问题
+                if (musics.length == 0) {
+                    that.el.hide();
+                } else {
+                    that.el.show();
+                }*/
 
                 that.switchTo(0);
-                that.pause();
             });
-
-            /*
-            // 以下功能有问题，暂时换一种方式实现。
-            // 页面不可见之后停止播放
-            var visibilityChange;
-            if (typeof document.hidden !== "undefined") {
-                visibilityChange = "visibilitychange";
-            } else if (typeof document.mozHidden !== "undefined") {
-                visibilityChange = "mozvisibilitychange";
-            } else if (typeof document.msHidden !== "undefined") {
-                visibilityChange = "msvisibilitychange";
-            } else if (typeof document.webkitHidden !== "undefined") {
-                visibilityChange = "webkitvisibilitychange";
-            }
-
-            $.maya.utils.showNotice("visibilityChange: " + visibilityChange);
-            // 手机实验不能触发此事件
-            document.addEventListener(visibilityChange, function() {
-                console.log("visibilityChange");
-                $.maya.utils.showNotice("visibility changed");
-                that.pause();
-            }, false);
-            */
         },
         /**
          * 异步获取指定地点的音乐设置信息
@@ -173,7 +199,7 @@
         /**
          * 切换音乐
          * @param  {[type]} currIndex [description]
-         * @return {[type]}           [description]
+         * @return {bool}             是否切换成功，true表示切换成功，否则切换失败
          */
         switchTo: function(currIndex) {
             //console.log("music play index: " + currIndex);
@@ -187,14 +213,18 @@
             if (currIndex < 0 || currIndex > endIndex) {
                 // 重置播放列表，处于暂停状态
                 that.reset();
-                return;
+                return false;
             }
+
+            console.log("playing index: " + currIndex);
 
             that.currMusicIndex = currIndex;
 
             that.audioElement.attr('src', musics[currIndex].LinkTo);
 
-            that.play();
+            //that.play();
+
+            return true;
         },
         /**
          * 是否可以播放
@@ -213,9 +243,16 @@
             if (!that.canPlay()) return;
 
             that.audioElement.get(0).play();
-            that.controlButton.addClass("z-play");
+            that.playStatus();
 
             that.isPlaying = true;
+        },
+        /**
+         * 设置为播放的状态
+         * @return {[type]} [description]
+         */
+        playStatus: function() {
+            this.controlButton.addClass("z-play");
         },
         /**
          * 暂停播放
@@ -225,9 +262,16 @@
             var that = this;
 
             that.audioElement.get(0).pause();
-            that.controlButton.removeClass("z-play");
+            that.pauseStatus();
 
             that.isPlaying = false;
+        },
+        /**
+         * 设置为暂停的状态
+         * @return {[type]} [description]
+         */
+        pauseStatus: function() {
+            this.controlButton.removeClass("z-play");
         },
         /**
          * 重置播放器

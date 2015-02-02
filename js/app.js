@@ -34,10 +34,7 @@ var app = {
         // 初始化日出日落时间
         that.calc_res();
         // 初始化音乐播放控件
-        $(".music-area").musicplayer({
-            did: localStorage.Id,
-            serviceUrl: config.serviceUrl + "/services/musics"
-        });
+        that.initMusicPlayer();
 
         console.log("intialize end.");
     },
@@ -108,6 +105,23 @@ var app = {
         }, 3000);
     },
     /**
+     * 初始化音乐播放器
+     * @return {[type]} [description]
+     */
+    initMusicPlayer: function() {
+        $(".music-area").musicplayer({
+            did: localStorage.Id,
+            serviceUrl: config.serviceUrl + "/services/musics"
+        });
+    },
+    /**
+     * 重置音乐播放器（更新音乐列表）
+     * @return {[type]} [description]
+     */
+    resetMusicPlayer: function() {
+        $(".music-area").musicplayer("refresh", { did: localStorage.Id });
+    },
+    /**
      * 初始化旅游地点选择器
      * @return {[type]} [description]
      */
@@ -125,8 +139,18 @@ var app = {
                 that.reloadPage();
                 // 日出日落时间每次都必须重新计算
                 that.calc_res();
+                // 重新初始化音乐播放器
+                that.resetMusicPlayer();
             }
         });
+    },
+    /**
+     * 重置旅游地点选择器
+     * @return {[type]} [description]
+     */
+    resetLocationSelector: function() {
+        var that = this;
+        $("#citybox22 .citybox-bd").locationsetter("reset");
     },
     /**
      * 重新加载当前页面
@@ -143,14 +167,6 @@ var app = {
                 app.showArticle2($(hash).get(0));
             }
         };
-    },
-    /**
-     * 重置旅游地点选择器
-     * @return {[type]} [description]
-     */
-    resetLocationSelector: function() {
-        var that = this;
-        $("#citybox22 .citybox-bd").locationsetter("reset");
     },
     /**
      * 检测用户是否已经选择了地理位置

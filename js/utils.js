@@ -41,7 +41,7 @@ function Utils() {
 	 */
 	this.showNotice = function(content) {
 		if (window.plugins && window.plugins.toast) {
-			window.plugins.toast.showLongBottom(content);
+			window.plugins.toast.showLongCenter(content);
 		}
 		else {
 			var _notice = $("#afui").notice({ 
