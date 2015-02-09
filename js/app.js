@@ -4,22 +4,27 @@
  */
 var app = {
     /**
-     * 应用初始化入口方法
+     * 用户点击返回的时间原始值
+     * @type {Number}
+     */
+    exitTime: 0,
+    /**
+     * 构建应用方法，只调用一次
      * @return {[type]} [description]
      */
-    initialize: function() {
+    create: function() {
         var that = this;
-        // 注册app监听事件
-        that.bindEvents();
+        // 检测是否选择旅行地点，如果没有选择，强制跳转到选择页面
+        that.checkLocation(true);
         // 初始化旅游地点选择控件
         that.initLocationSelector();
-        // 初始化旅游地点信息
-        that.initLocation(true);
+        // 注册app监听事件
+        that.bindEvents();
         // 初始化panel的内容为正在加载...
         $.each(config.toolHashs, function(index, idStr) {
             // 日出日落时间不需要从服务器动态加载，所以不需要显示loading
             if (idStr == "#RCRLSJ") return;
-            that.initLoading($(idStr));
+            that.initPanelLoading($(idStr));
         });
         // 初始化日期选择控件
         $('#date-input')
@@ -31,6 +36,17 @@ var app = {
             monthNames: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
             shortDayNames: ["日", "一", "二", "三", "四", "五", "六"]
         });
+
+        that.initialize();
+    },
+    /**
+     * 应用初始化，可以多次调用
+     * @return {[type]} [description]
+     */
+    initialize: function() {
+        var that = this;
+        // 初始化旅游地点信息
+        that.showLocation();
         // 初始化日出日落时间
         that.calc_res();
         // 初始化音乐播放控件
@@ -55,16 +71,14 @@ var app = {
         // fix a bug ios7 & ios8
         app.fixStatusBarIssue();
 
-        var exitTime = 0;
         // 点击返回按钮
         document.addEventListener("backbutton", function() {
             var hash = location.hash || "#main";
-            //alert(hash);
             if(hash.indexOf("#main") > -1) {
                 // 实现按两次返回键退出程序
-                if ((new Date()).valueOf() - exitTime > 2000) {
+                if ((new Date()).valueOf() - app.exitTime > 2000) {
                     $.maya.utils.showNotice("再按一次退出程序");
-                    exitTime = (new Date()).valueOf();
+                    app.exitTime = (new Date()).valueOf();
                 } else {
                     // 停止音乐播放
                     $(".music-area").musicplayer("pause");
@@ -91,17 +105,6 @@ var app = {
         setTimeout(function() {
             // 隐藏splashscreen
             navigator.splashscreen && navigator.splashscreen.hide();
-            //
-            // toast会显示在最顶层，为了不在splashscreen上显示，
-            // 所以我们在splashscreen隐藏之后再绑定相应的事件。
-            // network disconnection.
-            document.addEventListener('offline', function() { 
-                //$.maya.utils.showNotice("网络不给力");
-            }, false);
-            // network connnection.
-            document.addEventListener('online', function() { 
-                //$.maya.utils.showNotice("网络已连接");
-            }, false);
         }, 3000);
     },
     /**
@@ -110,19 +113,12 @@ var app = {
      */
     initMusicPlayer: function() {
         $(".music-area").musicplayer({
-            did: localStorage.Id,
+            did: $.maya.appData.getItem("Id") || 0,
             serviceUrl: config.serviceUrl + "/services/musics"
         });
     },
     /**
-     * 重置音乐播放器（更新音乐列表）
-     * @return {[type]} [description]
-     */
-    resetMusicPlayer: function() {
-        $(".music-area").musicplayer("refresh", { did: localStorage.Id });
-    },
-    /**
-     * 初始化旅游地点选择器
+     * 初始化旅游地点选择控件
      * @return {[type]} [description]
      */
     initLocationSelector: function() {
@@ -133,16 +129,30 @@ var app = {
             onSelect: function(district) {
                 that.saveLocation(district);
                 $.ui.hideModal();
-                // 关闭侧边栏
-                if ($.ui.isSideMenuOn()) $.ui.toggleSideMenu(false);
-                // 重新加载当前页面
-                that.reloadPage();
-                // 日出日落时间每次都必须重新计算
-                that.calc_res();
-                // 重新初始化音乐播放器
-                that.resetMusicPlayer();
+
+                $.maya.utils.afterAfuiTransitionCompleted(function() {
+                    // 关闭侧边栏
+                    if ($.ui.isSideMenuOn()) $.ui.toggleSideMenu(false);
+                    // 重新加载当前页面
+                    that.reloadPage();
+                    // 重新初始化应用
+                    that.initialize();
+
+                    that.showTips();
+                });
             }
         });
+    },
+    /**
+     * 显示全局提示
+     * @return {[type]} [description]
+     */
+    showTips: function() {
+        // show tips
+        if (!$.maya.appData.getItem("ShowTips")) {
+            $.maya.utils.alert({ message: "您知道吗？单击右下角的音乐图标可以暂停或者播放旅行音乐，双击则可以切换音乐" });
+            $.maya.appData.setItem("ShowTips", true);
+        };
     },
     /**
      * 重置旅游地点选择器
@@ -164,100 +174,21 @@ var app = {
             // 但是$.ui.loadDiv方法不会触发panel的load事件
             //$("#main .navbtn a[href=" + href + "]").trigger("click");
             if (hash.toUpperCase() != "#RCRLSJ") {
-                app.showArticle2($(hash).get(0));
+                app.loadArticle($(hash).get(0));
             }
         };
-    },
-    /**
-     * 检测用户是否已经选择了地理位置
-     * @return {[type]} [description]
-     */
-    checkLocation: function() {
-        if (!localStorage.Id) {
-            return false;
-        }
-        return true;
-    },
-    /**
-     * 在页面上显示地理位置信息
-     * @param  {[type]} force 如果未选择地点，是否弹出地点选择器
-     * @return {[type]}       [description]
-     */
-    initLocation: function(force) {
-        var that = this;
-
-        var locName = localStorage.Name || "未设置";
-        var locLng = localStorage.Lng;
-        var locLat = localStorage.Lat;
-
-        // 文章页顶部显示地点信息
-        $(".headinfo p.infocont a").text(locName);
-        $(".headinfo p.infocont span").text(that.translateLat(locLat) + "," + that.translateLng(locLng));
-        // 设置旅游城市页面显示地点信息
-        $("#citybox22 .citybox-hd span").text(locName);
-        // 首页顶部显示地点信息
-        $("#main .logocity").text("旅行目的地：" + locName);
-
-        if (!that.checkLocation() && force) {
-            that.changeLocation();
-        };
-    },
-    /**
-     * 修改地理位置信息
-     * @return {[type]} [description]
-     */
-    changeLocation: function() {
-        $.ui.showModal('#pageCity', 'slide');
-    },
-    /**
-     * 清除localStorage的地理位置信息
-     * @return {[type]} [description]
-     */
-    clearLocation: function() {
-        localStorage.removeItem("Id");
-        localStorage.removeItem("Name");
-        localStorage.removeItem("Lng");
-        localStorage.removeItem("Lat");
-        localStorage.removeItem("TimeZone");
-
-        this.initLocation();
-    },
-    /**
-     * 保存地理位置到localStorage
-     * @param  {[type]} district [description]
-     * @return {[type]}          [description]
-     */
-    saveLocation: function(district) {
-        try {
-            localStorage.setItem("Id", district.DistrictId);
-            localStorage.setItem("Name", district.Name);
-            localStorage.setItem("Lng", district.Lng);
-            localStorage.setItem("Lat", district.Lat);
-            localStorage.setItem("TimeZone", district.TimeZone || 8);
-        }
-        catch (errorThrown) {
-            $.ui.popup({
-                title: "警告",
-                message: "您的浏览器设置为无痕浏览，请退出无痕浏览模式再运行此应用。"
-            });
-            return;
-        }
-
-        this.initLocation();
     },
     /**
      * 显示文章内容
      * @param  {[type]} panel 当前的panel的dom对象
      * @return {[type]}       [description]
      */
-    showArticle2: function(panel) {
+    loadArticle: function(panel) {
         var el = $(panel);
         var that = this;
 
-        if (!that.checkLocation()) {
-            that.changeLocation();
-            return;
-        }
+        // 检测并且强制要求选择旅行地点
+        if (!that.checkLocation(true)) return;
 
         // afui动画完成之后执行回调方法
         // 这样可以避免页面多个效果重叠导致卡顿的问题
@@ -267,7 +198,7 @@ var app = {
                 dataType: "html",
                 data: {
                     type: el.prop("id").toUpperCase(),
-                    did: localStorage.Id
+                    did: $.maya.appData.getItem("Id")
                 }
             }
 
@@ -287,7 +218,7 @@ var app = {
 
                 $.ui.updatePanel(idStr, htmlContent);
 
-                that.initLocation();
+                that.showLocation();
             }).fail(function(jqXHR, textStatus, errorThrown) {
                 that.initExceptionContent(panel);
                 $.maya.utils.showNotice("网络不给力");
@@ -302,14 +233,14 @@ var app = {
      * @return {[type]}       [description]
      */
     clearArticle: function(panel) {
-        this.initLoading(panel);
+        this.initPanelLoading(panel);
     },
     /**
      * 显示正在加载信息
      * @param  {[type]} panel [description]
      * @return {[type]}       [description]
      */
-    initLoading: function(panel) {
+    initPanelLoading: function(panel) {
         var htmlContent = '<div class="article-masker">' 
                         + '    <span class="loading-icon spin"></span>' 
                         + '</div>';
@@ -364,20 +295,13 @@ var app = {
      * 清除浏览器localStorage缓存
      */
     clearCache: function() {
-        $.ui.popup({
-            title: "提醒",
-            message: "确定要清楚所有缓存吗？",
-            cancelText: "取消",
-            cancelCallback: function() {
-                //console.log("cancelled");
-            },
-            doneText: "确定",
+        $.maya.utils.confirm({
+            message: "确定要清空所有缓存吗？",
             doneCallback: function() {
                 $.ui.toggleSideMenu();
                 app.clearLocation();
                 app.changeLocation();
-            },
-            cancelOnly: false
+            }
         });
     },
     /**
@@ -400,9 +324,9 @@ var app = {
         var d = date.getDate(),
             m = date.getMonth() + 1,
             y = date.getFullYear(),
-            z = parseInt(localStorage.TimeZone),
-            lo = parseFloat(localStorage.Lng),
-            la = parseFloat(localStorage.Lat);
+            z = parseInt($.maya.appData.getItem("TimeZone")),
+            lo = parseFloat($.maya.appData.getItem("Lng")),
+            la = parseFloat($.maya.appData.getItem("Lat"));
 
         var ac = new AstroCalculator();
 
@@ -420,6 +344,79 @@ var app = {
         }
 
         $(".sunrise-result").html(ret);
+    },
+    /**
+     * 检测用户是否已经选择了地理位置
+     * @param  {[type]} forceToSelect 如果未选择地点，是否弹出地点选择器
+     * @return {[type]}               [description]
+     */
+    checkLocation: function(forceToSelect) {
+        if (!$.maya.appData.getItem("Id")) {
+            if (forceToSelect) this.changeLocation();
+            return false;
+        }
+        return true;
+    },
+    /**
+     * 在页面上显示地理位置信息
+     * @return {[type]}       [description]
+     */
+    showLocation: function() {
+        var that = this;
+
+        var locName = $.maya.appData.getItem("Name") || "未设置";
+        var locLng = $.maya.appData.getItem("Lng");
+        var locLat = $.maya.appData.getItem("Lat");
+
+        // 文章页顶部显示地点信息
+        $(".headinfo p.infocont a").text(locName);
+        $(".headinfo p.infocont span").text(that.translateLat(locLat) + "," + that.translateLng(locLng));
+        // 设置旅游城市页面显示地点信息
+        $("#citybox22 .citybox-hd span").text(locName);
+        // 首页顶部显示地点信息
+        $("#main .logocity").text("旅行目的地：" + locName);
+    },
+    /**
+     * 修改地理位置信息
+     * @return {[type]} [description]
+     */
+    changeLocation: function() {
+        $.ui.showModal('#pageCity', 'slide');
+    },
+    /**
+     * 清除localStorage的地理位置信息
+     * @return {[type]} [description]
+     */
+    clearLocation: function() {
+        $.maya.appData.removeItem("Id")
+                      .removeItem("Name")
+                      .removeItem("Lng")
+                      .removeItem("Lat")
+                      .removeItem("TimeZone")
+                      .removeItem("ShowTips");
+
+        this.showLocation();
+    },
+    /**
+     * 保存地理位置到localStorage
+     * @param  {[type]} district [description]
+     * @return {[type]}          [description]
+     */
+    saveLocation: function(district) {
+        try {
+            $.maya.appData.setItem("Id", district.DistrictId)
+                          .setItem("Name", district.Name)
+                          .setItem("Lng", district.Lng)
+                          .setItem("Lat", district.Lat)
+                          .setItem("TimeZone", district.TimeZone || 8);
+        }
+        catch (errorThrown) {
+            $.maya.utils.alert({
+                title: "警告",
+                message: "您的浏览器设置为无痕浏览，请退出无痕浏览模式再运行此应用。"
+            });
+            return;
+        }
     },
     /**
      * 解决ios7以上系统状态栏的问题

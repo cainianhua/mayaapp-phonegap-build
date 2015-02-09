@@ -43,7 +43,7 @@
                 <li><a href="#DSGZL" data-transition="slide">大使馆资料</a></li>
                 <li><a href="#DDJJDH" data-transition="slide">当地紧急电话</a></li>
                 <li><a href="#JCXX" data-transition="slide">机场信息</a></li>
-                <li><a href="#CRJKTX" data-transition="slide">出入卡填写</a></li>
+                <li><a href="#CRJKTX" data-transition="slide">出入境卡填写</a></li>
             </ul>
         </nav>
 
@@ -71,11 +71,11 @@
                 </ul>
             </div>
             
-            <div id="DLDY" class="panel" data-title="电流电压" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="CZBZ" class="panel" data-title="插座标准" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="QQTSYFF" class="panel" data-title="全球通使用方法" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="SSHL" class="panel" data-title="实时汇率" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="HBDH" class="panel" data-title="货币换算" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
+            <div id="DLDY" class="panel" data-title="电流电压" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="CZBZ" class="panel" data-title="插座标准" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="QQTSYFF" class="panel" data-title="全球通使用方法" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="SSHL" class="panel" data-title="实时汇率" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="HBDH" class="panel" data-title="货币换算" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
             <div id="RCRLSJ" data-title="日出日落时间" class="panel" data-nav="toollist">
             	<div class="headinfo"><p class="infotitle"><i class="icon-position"></i>您当前查询的目的地</p><p class="infocont"><a href="javascript:$.ui.showModal('#pageCity','slide');">广州市</a> <span>北纬23.567,东经113.456</span></p></div>
                 <div class="sunrise">                    
@@ -85,11 +85,11 @@
                     <div class="sunrise-result"></div>
                 </div>
             </div>
-            <div id="CPZT" class="panel" data-title="产品专题" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="DSGZL" class="panel" data-title="大使馆资料" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="DDJJDH" class="panel" data-title="当地紧急电话" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="JCXX" class="panel" data-title="机场信息" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
-            <div id="CRJKTX" class="panel" data-title="出入卡填写" data-nav="toollist" data-load="app.showArticle2" data-unload="app.clearArticle"></div>
+            <div id="CPZT" class="panel" data-title="产品专题" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="DSGZL" class="panel" data-title="大使馆资料" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="DDJJDH" class="panel" data-title="当地紧急电话" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="JCXX" class="panel" data-title="机场信息" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
+            <div id="CRJKTX" class="panel" data-title="出入卡填写" data-nav="toollist" data-load="app.loadArticle" data-unload="app.clearArticle"></div>
 
             <div id="pageCity" data-title="切换城市" data-modal="true" data-load="app.resetLocationSelector" class="panel" data-nav="toollist">
                 <div id="citybox22">
@@ -123,7 +123,7 @@
         $(function() {
             // 考虑到部分功能依赖于afui，所以把初始化放在afui ready之后去做
             $.ui.ready(function() {
-                app.initialize();
+                app.create();
             });
         });
     </script>

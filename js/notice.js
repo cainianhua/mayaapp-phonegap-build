@@ -69,15 +69,7 @@
             supressTitle: false,
             show: function () {
                 var self = this;
-                var markup = "<div id='" + this.id + "' class='afNotice hidden "+ this.addCssClass + "'>"+
-                            /*"<header>" + this.title + "</header>"+*/
-                            "<div>" + this.message + "</div>"+
-                            /*"<footer>"+
-                                 "<a href='javascript:;' class='" + this.cancelClass + "' id='cancel'>" + this.cancelText + "</a>"+
-                                 "<a href='javascript:;' class='" + this.doneClass + "' id='action'>" + this.doneText + "</a>"+
-                                 "<div style='clear:both'></div>"+
-                            "</footer>"+*/
-                            "</div>";
+                var markup = "<div id='" + this.id + "' class='afNotice hidden "+ this.addCssClass + "'><div>" + this.message + "</div></div>";
 
                 $(this.container).append(markup);
                 var $el = $.query("#" + this.id);
@@ -87,12 +79,11 @@
                 $el.bind("orientationchange", function () {
                     self.positionNotice();
                 });
-                //force header/footer showing to fix CSS style bugs
-                //$el.find("header").show();
-                //$el.find("footer").show();
-                setTimeout(function(){
+
+                setTimeout(function () {
                     $el.removeClass("hidden");
-                    self.onShow(self);
+                    // 3秒之后自动隐藏
+                    setTimeout(function() { self.hide(); }, 3000);
                 }, 50);
             },
 
@@ -101,9 +92,7 @@
                 $.query("#" + self.id).addClass("hidden");
                 //$.unblockUI();
                 if(!$.os.ie&&!$.os.android){
-                    setTimeout(function () {
-                        self.remove();
-                    }, 250);
+                    setTimeout(function () { self.remove(); }, 250);
                 }
                 else
                     self.remove();
