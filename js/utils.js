@@ -206,7 +206,8 @@ function Network() {
      * @return {Boolean} [description]
      */
     this.isCell = function() {
-        return navigator.connection && (navigator.connection.type == Connection.CELL || navigator.connection.type == Connection.CELL_2G || navigator.connection.type == Connection.CELL_3G || navigator.connection.type == Connection.CELL_4G);
+        return true;
+        //return navigator.connection && (navigator.connection.type == Connection.CELL || navigator.connection.type == Connection.CELL_2G || navigator.connection.type == Connection.CELL_3G || navigator.connection.type == Connection.CELL_4G);
     }
 }
 // 挂载到jQuery对象上
